@@ -1,0 +1,237 @@
+#include <SoftwareSerial.h>
+#include <Servo.h>
+
+//블루투스
+#define BT_RXD 8
+#define BT_TXD 7
+#define CHAR_LONG 20
+
+//500원 -9핀
+#define Five_H_A 0
+#define Five_H_B 55
+//100원 -10핀
+#define One_H_A 10
+#define One_H_B 60
+//50원 -11핀
+#define Five_T_A 8
+#define Five_T_B 60
+//10원 -12핀
+#define One_T_A 10
+#define One_T_B 55
+
+SoftwareSerial BTSerial(BT_RXD, BT_TXD);
+Servo servo_500;//서보 라이브러리 변수 선언
+Servo servo_100;//서보 라이브러리 변수 선언
+Servo servo_50;//서보 라이브러리 변수 선언
+Servo servo_10;//서보 라이브러리 변수 선언
+
+//동전개수 변수
+int FIVE_H = 0;
+int ONE_H = 0;
+int FIVE_T = 0;
+int ONE_T = 0;
+
+//블루투스 받아오는 변수
+String response = "";
+int count =0;
+char response_c[CHAR_LONG];
+String DropCoin ="";
+
+int coincount(int front, int rear, char Response_c[CHAR_LONG])
+{
+  int many=0;
+  String temporary = "";
+  
+    for(int a=front+1; a < rear; a++)
+    {
+      temporary+=Response_c[a];
+    }
+
+    //문자열을 int로 바꿈
+    many = temporary.toInt();
+    //Serial.println(many);
+  return many;
+}
+
+/*int servo_act(int count, int bottom, int top)
+{
+  //servo_500을 바꾸는 방법이 있나? 각 서보모터에 맞게...
+    int pos;
+    for(int a; a < count ; a++)
+    {
+      for(pos = bottom ; pos < top ; pos += 1)
+      {
+        //Servo.write(각도값)
+        servo_500.write(pos);
+        delay(10);
+      }
+      //delay(1000);
+      for(pos = top ; pos > bottom -5 ; pos -= 1)
+      {
+        //Servo.write(각도값)
+        servo_500.write(pos);
+        delay(10);
+      }
+    delay(1000);  
+    }
+    return 0;
+}*/
+
+//어떤 서보모터가 작동하는지 정하고 몇번 동작할지를 명령함
+int servo(int Five_H, int One_H, int Five_T, int One_T)
+{
+  //시간이 걸려서 잠시 막아둠
+    /*int pos;
+    //500원
+    for(int a=0; a < Five_H ; a++)
+    {
+      for(pos = Five_H_A ; pos < Five_H_B ; pos += 1)
+      {
+        //Servo.write(각도값)
+        servo_500.write(pos);
+        delay(10);
+      }
+      //delay(1000);
+      for(pos = Five_H_B ; pos > Five_H_A -5 ; pos -= 1)
+      {
+        //Servo.write(각도값)
+        servo_500.write(pos);
+        delay(10);
+      }
+    delay(1000);  
+    }
+
+    //100원
+    for(int a=0; a < One_H ; a++)
+    {
+      for(pos = One_H_A ; pos < One_H_B ; pos += 1)
+      {
+        //Servo.write(각도값)
+        servo_100.write(pos);
+        delay(10);
+      }
+      //delay(1000);
+      for(pos = One_H_B ; pos > One_H_A -5 ; pos -= 1)
+      {
+        //Servo.write(각도값)
+        servo_100.write(pos);
+        delay(10);
+      }
+    delay(1000);  
+    }
+
+    //50원
+    for(int a=0; a < Five_T ; a++)
+    {
+      for(pos = Five_T_A ; pos < Five_T_B ; pos += 1)
+      {
+        //Servo.write(각도값)
+        servo_50.write(pos);
+        delay(10);
+      }
+      //delay(1000);
+      for(pos = Five_T_B ; pos > Five_T_A -5 ; pos -= 1)
+      {
+        //Servo.write(각도값)
+        servo_50.write(pos);
+        delay(10);
+      }
+    delay(1000);  
+    }
+
+    //10원
+    for(int a=0; a < One_T ; a++)
+    {
+      for(pos = One_T_A ; pos < One_T_B ; pos += 1)
+      {
+        //Servo.write(각도값)
+        servo_10.write(pos);
+        delay(10);
+      }
+      //delay(1000);
+      for(pos = One_T_B ; pos > One_T_A -5 ; pos -= 1)
+      {
+        //Servo.write(각도값)
+        servo_10.write(pos);
+        delay(10);
+      }
+    delay(1000);  
+    }*/
+
+    return 0;
+}
+
+void setup()
+{
+  Serial.begin(9600);
+  BTSerial.begin(9600);
+
+  servo_500.attach(9);//setup에서 서버라는 클래스의 초기화 attach라는 매소드(함수)에다가 9라는 핀번호로 초기화
+  servo_500.write(Five_H_A);
+  servo_100.attach(10);
+  servo_100.write(One_H_A);
+  servo_50.attach(11);
+  servo_50.write(Five_T_A);
+  servo_10.attach(12);
+  servo_10.write(One_T_A);
+}
+
+void loop()
+{
+  count =0;
+  
+  //블루투스에서 신호를 받아오기
+  while(BTSerial.available())  //mySerial에 전송된 값이 있으면
+  {
+    char c = (char)BTSerial.read();  
+    response_c[count] = c;//각배열에 넣기
+    count++;
+    response+=c;   //수신되는 문자를 myString에 모두 붙임 (1바이트씩 전송되는 것을 연결)
+    delay(5);           //수신 문자열 끊김 방지 
+  }
+
+  //블루투스를 통해서 값을 받으면 작동
+  if(!response.equals(""))  //myString 값이 있다면
+  {
+    Serial.println("input: "+response); //시리얼모니터에 response 출력
+    
+    int response_len = response.length();
+
+    //: 감지하기
+    int order = response.indexOf(":");// 첫 번째 콤마 위치
+    
+    //콤마 감지하기 
+    int first = response.indexOf(",");// 첫 번째 콤마 위치
+    int second = response.indexOf(",",first+1); // 두 번째 콤마 위치
+    int third = response.indexOf(",",second+1); // 세 번째 콤마 위치
+
+    for(int a=0; a < order; a++)
+    {
+      DropCoin+=response_c[a];
+    }
+    
+    //각 동전 개수알기
+    FIVE_H = coincount(order, first, response_c);
+    ONE_H = coincount(first, second, response_c);
+    FIVE_T = coincount(second, third, response_c);
+    ONE_T = coincount(third, response_len+1, response_c);
+
+    if(!DropCoin.equals("DropCoin"))
+    {
+      //정확한 명령어가 안옴
+      BTSerial.println("Error");
+      DropCoin = "";
+    }
+    else
+    {
+      //다 했다는 신호를 송신
+      BTSerial.println("Done");
+      //서보모터 작동
+      servo(FIVE_H, ONE_H, FIVE_T, ONE_T);
+      //리셋하기
+      DropCoin = "";
+    }
+    //초기화
+    response="";  //myString 변수값 초기화
+  }
+}
